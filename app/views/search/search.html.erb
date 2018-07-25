@@ -1,0 +1,123 @@
+<div id = "left"></div>
+<div id = "right"></div>
+<div class="container">
+  <nav class="nav-bar">
+    <li>
+      <h1>Quick - let</h1>
+    </li>
+    <%= form_tag("/search/search", method: "post",class: "search_box") do %>
+      <li>
+        <div id ="Solr" >
+          <%= label_tag( :solr_1 ,"Production",{}) %>
+          <%= radio_button_tag 'solr', 1, (params[:solr] == '1' || !params[:solr])  , :class => "solr_1"%>
+          <%= label_tag( :solr_2 ,"UAT",{}) %>
+          <%= radio_button_tag 'solr', 2 , params[:solr] == '2', :class => 'solr_2'%>
+          <%= label_tag( :solr_3 ,"Hydratest",{}) %>
+          <%= radio_button_tag 'solr', 3 , params[:solr] == '3', :class => 'solr_3'%>
+        </div>
+      </li>
+      <li>
+        <%= text_area_tag(:q, params[:q] , placeholder: 'Search') %>
+      </li>
+      <li>
+        <%= button_tag("Search", :class=>" btn btn-primary") %>
+      </li>
+      </nav>
+    <% end %>
+
+    <% if (defined? @solr_query) && @solr_query != ''  %>
+      <hr/>
+      <h2>Performing Query: </h2>
+      <%= @solr_query.nil? ? "No query" : "#{@environment_name}: #{@solr_query} "%>
+      <hr />
+
+    <% end %>
+
+
+    <% if (defined? @documents) && @solr_query != '' && @documents != nil && @solr_documents != :query_failed %>
+      <% if @oid_id_search %>
+        <% if @missing_pids != [] || @missing_oids != [] %>
+          <h2>Not Found:</h2>
+          <%= render partial: "missingmodal" %>
+        <% end %>
+
+        <% if @invalid_list.size >0 %>
+          <h2>Invalid tokens:</h2>
+          <%= @invalid_list.map {|invalid_item| %>
+            <% "[ #{invalid_item} ]" %>
+          <% }.join(', ')  %>
+        <% end %>
+      <%end%>
+
+      <h2>Results:</h2>
+      <table class="table table-striped">
+        <thead>
+        <tr>
+          <th scope="col">clio_id_display</th>
+          <th scope="col">title_display</th>
+          <th scope="col">author_display</th>
+          <th scope="col">isbn_display</th>
+          <th scope="col">full_publisher_display</th>
+          <th scope="col">location_call_number_id_display</th>
+          <th scope="col">Links</th>
+        </tr>
+        </thead>
+        <tbody>
+        <% @documents.each { |document | %>
+            <%ocidoc = document[1]%>
+            <%document = document[0]%>
+          <tr class="<% if !document.will_display_in_production? %>no-production<% end %> <% if !document.will_display_in_test? %>no-test<% end %>">
+            <td class="document-valid" >
+              <%= document[:clio_id_display].to_s.tr('""[]','') %><br />
+            </td>
+            <td class="document<%if ocidoc[:title_display].to_s.tr('[]/','').include? document[:title_display].to_s.tr('""[]','') %>-valid<% else %>-invalid<% end %>">
+              <%= document[:title_display].to_s.tr('""[]','')%>
+              <%= ocidoc[:title_display].to_s.tr('[]/','') %>
+            </td>
+            <td class="document<%if ocidoc[:author_display].to_s.tr('[]/""','').include? document[:author_display].to_s.tr('""[]','') %>-valid<% else %>-invalid<% end %>" >
+              <%= document[:author_display].to_s.tr('""[]','') %>
+            </td>
+            <td class="document<%if ocidoc[:isbn_display].to_s.tr('[]/""','').include? document[:isbn_display].to_s.tr('""[]','') %>-valid<% else %>-invalid<% end %>" >
+              <%= document[:isbn_display].to_s.tr('""[]','') %>
+            </td>
+            <td class="document<%if ocidoc[:full_publisher_display].to_s.tr('[]/""','').include? document[:full_publisher_display].to_s.tr('""[]','') %>-valid<% else %>-invalid<% end %>" >
+              <%=document[:full_publisher_display].to_s.tr('""[]','') %>
+            </td>
+            <td class="document<%if true%>-valid<% else %>-invalid<% end %>" >
+              <%= document[:location_call_number_id_display].to_s.tr('""[]','') %>
+            </td>
+            <td>
+              <a class = "Findit btn btn-info"  href="http://search.library.yale.edu/catalog/<%=document[:id].to_s%>?counter=1 ">QuickSearch</a>
+            </td>
+          </tr>
+        <%} unless @solr_query == '' %>
+
+
+
+
+
+    <% elsif !@invalid_list.nil? && @invalid_list.size >0 %>
+      <h2>Invalid tokens:</h2>
+      <%= @invalid_list.map {|invalid_item| %>
+        <% "[ #{invalid_item} ]" %>
+      <% }.join(', ')  %>
+      <br/>
+    <%end%>
+
+    </tbody>
+
+    </tbody>
+
+    </table>
+    <% if !@connected && @url && !@url.blank? %>
+      ERROR: Unable to query the solr instance at <%=@url%>!
+    <%end%>
+    <% if @connected && (@solr_documents.empty? || @solr_query == '') %>
+      No solr_documents found.
+    <% end %>
+
+
+    </div>
+
+
+<button onclick="topFunction()" id="scroll_to_top" title="Go to top">↑</button>
