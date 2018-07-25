@@ -1,0 +1,11 @@
+default:  &defaults
+  solr_url: http://hydratest.library.yale.edu:8083/solr/collection1
+  production_states: [A]
+  test_states: [A,I]
+  valid_viewopts: [default, archival, archivalDigitized, defaultDigitized]
+development:
+  <<: *defaults
+test:
+  <<: *defaults
+production:
+  <<: *defaults
